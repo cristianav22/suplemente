@@ -44,7 +44,7 @@ export const AuthScreen: React.FC = () => {
     setError('');
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'http://localhost:3000' }
+      options: { redirectTo: window.location.origin }
     });
     if (error) {
       setError('Error al iniciar sesión con Google.');
