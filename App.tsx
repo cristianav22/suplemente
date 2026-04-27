@@ -9,6 +9,8 @@ import { AuthScreen } from './components/AuthScreen';
 import { ResetPassword } from './components/ResetPassword';
 import { supabase } from './services/supabaseClient';
 import type { User } from '@supabase/supabase-js';
+import { ifError } from 'assert';
+import { error } from 'console';
 
 
 const App: React.FC = () => {
@@ -16,7 +18,7 @@ const App: React.FC = () => {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [isRecovery, setIsRecovery] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'calendar' | 'profile'>('dashboard');
-
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: 'Atleta',
     weight: 75,
@@ -57,24 +59,32 @@ const App: React.FC = () => {
     if (!user) return;
 
     // Cargar perfil
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          setUserProfile({
-            name: data.name,
-            weight: data.weight,
-            goal: data.goal,
-            activityLevel: data.activity_level,
-            activeSupplements: data.active_supplements ?? [],
-            customSupplements: data.custom_supplements ?? [],
-            sleepGoal: data.sleep_goal ?? 8
-          });
-        }
+    setLoadingProfile(true);
+
+supabase
+  .from('profiles')
+  .select('*')
+  .eq('id', user.id)
+  .single()
+  .then(({ data, error }) => { 
+    if (error) {
+      console.error('Error cargando perfil:', error);
+    }
+
+    if (data) {
+      setUserProfile({
+        name: data.name,
+        weight: data.weight,
+        goal: data.goal,
+        activityLevel: data.activity_level,
+        activeSupplements: data.active_supplements ?? [],
+        customSupplements: data.custom_supplements ?? [],
+        sleepGoal: data.sleep_goal ?? 8
       });
+    }
+
+    setLoadingProfile(false);
+  });
 
     // Cargar logs
     supabase
@@ -167,6 +177,13 @@ const App: React.FC = () => {
       </div>
     );
   }
+  if (loadingProfile) {
+  return (
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="text-white text-lg">Cargando perfil...</div>
+    </div>
+  );
+}
 
   if (isRecovery) {
     return <ResetPassword onDone={() => setIsRecovery(false)} />;
