@@ -11,9 +11,10 @@ interface Props {
   onAddLog: (log: Omit<SupplementLog, 'id' | 'timestamp'>) => void;
 }
 
-export const Dashboard: React.FC<Props> = ({ profile, logs, targets, onAddLog }) => {
+export const Dashboard = ({ profile, logs, targets, onAddLog }: Props) => {
   const [aiAnalysis, setAiAnalysis] = useState<string>("");
   const [loadingAi, setLoadingAi] = useState(false);
+
   
   // Protein Widget State
   const [proteinMode, setProteinMode] = useState<'grams' | 'food'>('grams');
@@ -35,6 +36,7 @@ export const Dashboard: React.FC<Props> = ({ profile, logs, targets, onAddLog })
     const today = new Date().setHours(0, 0, 0, 0);
     return logs.filter(l => l.timestamp >= today);
   }, [logs]);
+  
 
   const totals = useMemo(() => {
     const protein = todaysLogs
@@ -54,7 +56,7 @@ export const Dashboard: React.FC<Props> = ({ profile, logs, targets, onAddLog })
       .reduce((acc, curr) => acc + curr.amount, 0);
 
     return { protein, creatine, waterMl, sleep };
-  }, [todaysLogs]);
+  }, [todaysLogs]);  
 
   // Water Logic (Glasses)
   const glassSize = 200; // ml
@@ -63,6 +65,24 @@ export const Dashboard: React.FC<Props> = ({ profile, logs, targets, onAddLog })
     if (totals.creatine > 0) base += 0.5;
     return parseFloat(base.toFixed(1));
   }, [targets.water, totals.creatine]);
+  const proteinPercent = Math.min(
+    100,
+    targets.protein > 0 ? (totals.protein / targets.protein) * 100 : 0
+  );
+
+  const waterPercent = Math.min(
+    100,
+    recommendedWaterL > 0 ? ((totals.waterMl / 1000) / recommendedWaterL) * 100 : 0
+  );
+
+  const sleepPercent = Math.min(
+    100,
+    targets.sleep > 0 ? (totals.sleep / targets.sleep) * 100 : 0
+  );
+
+  const dailyScore = Math.round(
+    (proteinPercent + waterPercent + sleepPercent) / 3
+  );
 
   const totalGlassesTarget = Math.ceil((recommendedWaterL * 1000) / glassSize);
   const glassesConsumed = Math.floor(totals.waterMl / glassSize);
@@ -177,6 +197,94 @@ export const Dashboard: React.FC<Props> = ({ profile, logs, targets, onAddLog })
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* --- RESUMEN CON MÉTRICAS --- */}
+        <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl md:col-span-2 lg:col-span-3">
+        <h2 className="text-indigo-800 font-bold text-lg mb-3">Resumen de hoy</h2>
+
+      {/* SCORE */}
+      <div className="mb-4">
+        <div className="text-sm text-indigo-700 mb-1">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-indigo-700">Score diario</div>
+          <ProgressDial percent={dailyScore} />
+        </div>
+        </div>
+      
+      
+
+      <div className="flex justify-between mt-4">
+
+      <div className="flex flex-col items-center">
+        <ProgressDial percent={proteinPercent} size={60} />
+        <span className="text-xs mt-1 text-gray-600">Proteína</span>
+      </div>
+
+      <div className="flex flex-col items-center">
+        <ProgressDial percent={waterPercent} size={60} />
+        <span className="text-xs mt-1 text-gray-600">Agua</span>
+      </div>
+
+      <div className="flex flex-col items-center">
+        <ProgressDial percent={sleepPercent} size={60} />
+        <span className="text-xs mt-1 text-gray-600">Sueño</span>
+      </div>
+
+  </div>
+      
+  </div>
+
+  {/* PROTEINA */}
+  <div className="mb-3">
+    <div className="text-sm text-indigo-700 mb-1">
+      Proteína: {Math.round(proteinPercent)}%
+    </div>
+    <div className="w-full bg-gray-200 rounded-full h-2">
+      <div 
+        className={`${getProgressColor(proteinPercent)} h-2 rounded-full`}
+        style={{ width: `${proteinPercent}%` }}
+      />
+    </div>
+  </div>
+
+  {/* AGUA */}
+  <div className="mb-3">
+    <div className="text-sm text-indigo-700 mb-1">
+      Hidratación: {Math.round(waterPercent)}%
+    </div>
+    <div className="w-full bg-gray-200 rounded-full h-2">
+      <div 
+        className={`${getProgressColor(waterPercent)} h-2 rounded-full`}
+        style={{ width: `${waterPercent}%` }}
+      />
+    </div>
+  </div>
+
+  {/* SUEÑO */}
+  <div>
+    <div className="text-sm text-indigo-700 mb-1">
+      Sueño: {Math.round(sleepPercent)}%
+    </div>
+    <div className="w-full bg-gray-200 rounded-full h-2">
+      <div 
+        className={`${getProgressColor(sleepPercent)} h-2 rounded-full`}
+        style={{ width: `${sleepPercent}%` }}
+      />
+    </div>
+  </div>
+</div>
+        {/* --- RESUMEN SIMPLE --- */}
+      <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl md:col-span-2 lg:col-span-3">
+        <h2 className="text-indigo-800 font-bold text-lg mb-1">Resumen de hoy</h2>
+        <div className="text-sm text-indigo-700">
+       Registros: {todaysLogs.length}
+        </div>
+        <div className="text-sm text-indigo-700">
+        Proteína: {totals.protein}g / {targets.protein}g
+        </div>
+        <div className="text-sm text-indigo-700">
+        Agua: {(totals.waterMl / 1000).toFixed(1)}L / {recommendedWaterL}L
+        </div>
+      </div>
         
         {/* WATER TRACKER (Always visible) */}
         <div className="bg-white p-5 rounded-xl shadow-sm border border-cyan-100 md:col-span-2 lg:col-span-1 relative overflow-hidden">
@@ -185,7 +293,7 @@ export const Dashboard: React.FC<Props> = ({ profile, logs, targets, onAddLog })
                 <h3 className="font-bold text-gray-800 flex items-center gap-2">
                   <Droplets className="text-cyan-500" size={20}/> Hidratación
                 </h3>
-                <p className="text-xs text-gray-500 mt-1">Meta: {recommendedWaterL}L ({totalGlassesTarget} vasos)</p>
+                <div className="text-xs text-gray-500 mt-1">Meta: {recommendedWaterL}L ({totalGlassesTarget} vasos)</div>
              </div>
              <div className="text-right">
                <span className="text-2xl font-bold text-cyan-600">{glassesConsumed}</span>
@@ -214,9 +322,9 @@ export const Dashboard: React.FC<Props> = ({ profile, logs, targets, onAddLog })
           </button>
           
           {glassesRemaining > 0 && (
-            <p className="text-center text-xs text-gray-400 mt-2">
+            <div className="text-center text-xs text-gray-400 mt-2">
               Faltan {glassesRemaining} vasos para tu meta
-            </p>
+            </div>
           )}
         </div>
 
@@ -227,7 +335,7 @@ export const Dashboard: React.FC<Props> = ({ profile, logs, targets, onAddLog })
                    <h3 className="font-bold text-gray-800 flex items-center gap-2">
                      <Moon className="text-indigo-900" size={20}/> Sueño
                    </h3>
-                   <p className="text-xs text-gray-500 mt-1">Meta: {targets.sleep}h</p>
+                   <div className="text-xs text-gray-500 mt-1">Meta: {targets.sleep}h</div>
                 </div>
                 <div className="text-right">
                   <span className="text-2xl font-bold text-indigo-900">{totals.sleep}h</span>
@@ -328,7 +436,7 @@ export const Dashboard: React.FC<Props> = ({ profile, logs, targets, onAddLog })
                    </button>
                  </div>
                  {proteinLeft > 0 && (
-                   <p className="text-xs text-gray-400 mt-2">Te faltan {proteinLeft}g. ¡Sigue así!</p>
+                   <div className="text-xs text-gray-400 mt-2">Te faltan {proteinLeft}g. ¡Sigue así!</div>
                  )}
               </div>
             );
@@ -346,11 +454,11 @@ export const Dashboard: React.FC<Props> = ({ profile, logs, targets, onAddLog })
                    {hasTaken && <Check className="text-green-600" size={24} />}
                 </div>
                 
-                <p className="text-sm text-gray-500 mt-2 mb-4">
+                <div className="text-sm text-gray-500 mt-2 mb-4">
                   {hasTaken 
                     ? "¡Excelente! Has cumplido con tu creatina hoy." 
                     : "No olvides tu dosis diaria para mantener la saturación."}
-                </p>
+                </div>
 
                 {!hasTaken ? (
                   <button 
@@ -425,7 +533,7 @@ export const Dashboard: React.FC<Props> = ({ profile, logs, targets, onAddLog })
                  </div>
                </div>
             ) : aiAnalysis ? (
-              <p className="italic border-l-4 border-purple-300 pl-3">"{aiAnalysis}"</p>
+              <div className="italic border-l-4 border-purple-300 pl-3">"{aiAnalysis}"</div>
             ) : (
               <p>Presiona analizar para recibir feedback sobre tu hidratación y macros de hoy.</p>
             )}
@@ -435,6 +543,57 @@ export const Dashboard: React.FC<Props> = ({ profile, logs, targets, onAddLog })
       </div>
     );
   };
+
+  const getProgressColor = (percent: number) => {
+  if (percent < 40) return "bg-red-500";
+  if (percent < 70) return "bg-yellow-400";
+  return "bg-green-500";
+};
+
+  //Dial para mostrar progreso diario general (proteína, agua, sueño) con colores de alerta y mensajes motivacionales. Luego widgets individuales para cada uno con inputs rápidos y recomendaciones personalizadas.
+  const ProgressDial = ({ percent, size = 80 }: { percent: number; size?: number }) => {
+  const stroke = size * 0.1;
+  const radius = size / 2;
+  const normalizedRadius = radius - stroke / 2;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  const strokeDashoffset =
+    circumference - (percent / 100) * circumference;
+
+  const color =
+    percent < 40 ? "#ef4444" :
+    percent < 70 ? "#facc15" :
+    "#22c55e";
+
+  return (
+    <div className="relative flex items-center justify-center">
+      <svg height={size} width={size}>
+        <circle
+          stroke="#e5e7eb"
+          fill="transparent"
+          strokeWidth={stroke}
+          r={normalizedRadius}
+          cx={radius}
+          cy={radius}
+        />
+        <circle
+          stroke={color}
+          fill="transparent"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={`${circumference} ${circumference}`}
+          style={{ strokeDashoffset }}
+          r={normalizedRadius}
+          cx={radius}
+          cy={radius}
+        />
+      </svg>
+
+      <div className="absolute text-xs font-bold text-gray-700">
+        {Math.round(percent)}%
+      </div>
+    </div>
+  );
+};
 
   return (
     <div className="space-y-6">

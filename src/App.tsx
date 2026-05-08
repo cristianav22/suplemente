@@ -11,6 +11,7 @@ import { supabase } from './services/supabaseClient';
 import type { User } from '@supabase/supabase-js';
 import { ifError } from 'assert';
 import { error } from 'console';
+import { addLog } from "./services/logService"
 
 
 const App: React.FC = () => {
@@ -56,6 +57,10 @@ const App: React.FC = () => {
 
   // --- Cargar perfil y logs desde Supabase cuando hay usuario ---
   useEffect(() => {
+    if (!user) {
+    setLoadingProfile(false);
+    return;
+}
     if (!user) return;
 
     // Cargar perfil
@@ -105,10 +110,22 @@ supabase
         }
       });
   }, [user]);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const todayLogs = logs.filter(log => {
+        const logDate = new Date(log.timestamp);
+        return logDate >= today;
+  });
+      const totalToday = todayLogs.length;
 
   // --- Guardar perfil en Supabase ---
   const handleSaveProfile = async (p: UserProfile) => {
-    setUserProfile(p);
+    if (!p) return;
+    setUserProfile(prev => ({
+      ...prev,
+      ...p
+    }));
     if (!user) return;
     await supabase.from('profiles').upsert({
       id: user.id,
@@ -134,7 +151,7 @@ supabase
     setLogs(prev => [newLog, ...prev]);
 
     if (!user) return;
-    await supabase.from('supplement_logs').insert({
+    await addLog({
       user_id: user.id,
       type: newLog.type,
       name: newLog.name,
@@ -192,13 +209,13 @@ supabase
   if (!user) {
     return <AuthScreen />;
   }
-
+// logo de la app en dashboard
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row max-w-7xl mx-auto">
       <nav className="md:w-64 bg-white md:min-h-screen border-r border-gray-200 flex flex-row md:flex-col sticky top-0 md:relative z-10 shadow-sm md:shadow-none order-2 md:order-1">
         <div className="hidden md:flex items-center gap-2 p-6 text-indigo-600">
-          <Dumbbell size={32} />
-          <span className="text-2xl font-bold tracking-tight">SupleMente</span>
+          <img src="/icons/icon-512.png" alt="logo" className="w-12 h-12 rounded-lg shadow-sm" />
+          <span className="text-2xl font-bold tracking-tight">SupleSuite</span>
         </div>
 
         <div className="flex-1 flex md:flex-col justify-around md:justify-start p-2 md:p-4 gap-2">
@@ -236,8 +253,8 @@ supabase
       <main className="flex-1 p-4 md:p-8 overflow-y-auto order-1 md:order-2">
         <div className="md:hidden flex items-center justify-between mb-6">
           <div className="flex items-center gap-2 text-indigo-600">
-            <Dumbbell size={28} />
-            <span className="text-xl font-bold">SupleMente</span>
+            <img src="/icons/icon-512.png" alt="logo" className="w-7 h-7 rounded-lg shadow-sm" />
+            <span className="text-xl font-bold">SupleSuite</span>
           </div>
           <button onClick={handleLogout} className="text-gray-400 hover:text-red-500">
             <LogOut size={22} />
@@ -245,6 +262,7 @@ supabase
         </div>
 
         {activeTab === 'dashboard' && (
+          
           <Dashboard profile={userProfile} logs={logs} targets={targets} onAddLog={handleAddLog} />
         )}
         {activeTab === 'log' && (

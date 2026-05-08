@@ -53,16 +53,55 @@ export const AuthScreen: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+    <div 
+      className="
+      min-h-screen
+      bg-gradient-to-b
+       from-[#050816]
+       to-black
+        flex
+        items-center
+        justify-center
+        p-6
+      ">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3">💊</div>
-          <h1 className="text-3xl font-bold text-white">SupleMente</h1>
-          <p className="text-gray-400 mt-1">Tu coach inteligente de suplementos</p>
-        </div>
+        <div className="flex flex-col items-center mb-10">
+  
+          <img
+            src="/icons/icon-512.png"
+            alt="SupleSuite Logo"
+            className="
+            w-32
+            h-32
+            object-contain
+            drop-shadow-[0_0_25px_rgba(139,92,246,0.55)]
+            mb-4
+            select-none
+        "
+      />
 
-        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+      <h1 className="text-5xl font-extrabold tracking-tight text-white">
+        SupleSuite
+      </h1>
+
+      <p className="text-gray-400 text-lg mt-2">
+        Tu coach de suplementos
+      </p>
+
+    </div>
+
+        <div 
+          className="
+          bg-[#0B1220]/90
+          backdrop-blur-xl
+          rounded-3xl
+          p-8
+          border
+          border-white/10
+          shadow-2xl
+          "
+        >
           <h2 className="text-xl font-semibold text-white mb-6">
             {mode === 'login' && 'Iniciar sesión'}
             {mode === 'register' && 'Crear cuenta'}
