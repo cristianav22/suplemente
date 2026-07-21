@@ -65,7 +65,7 @@ export const CalendarHistory: React.FC<Props> = ({ logs }) => {
           key={day}
           onClick={() => setSelectedDate(dateToCheck)}
           className={`h-10 w-10 md:h-14 md:w-14 rounded-full flex flex-col items-center justify-center relative transition-all
-            ${isSelected ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700'}
+            ${isSelected ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-indigo-50 text-gray-700 dark:text-gray-200'}
             ${isToday && !isSelected ? 'border-2 border-indigo-600 font-bold' : ''}
           `}
         >
@@ -74,7 +74,7 @@ export const CalendarHistory: React.FC<Props> = ({ logs }) => {
             <span className="absolute bottom-1 w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
           )}
           {hasLogs && isSelected && (
-             <span className="absolute bottom-1 w-1.5 h-1.5 bg-white/50 rounded-full"></span>
+             <span className="absolute bottom-1 w-1.5 h-1.5 bg-white dark:bg-gray-900/50 rounded-full"></span>
           )}
         </button>
       );
@@ -95,20 +95,20 @@ export const CalendarHistory: React.FC<Props> = ({ logs }) => {
   return (
     <div className="space-y-6 animate-fade-in">
        {/* Calendar Card */}
-       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+       <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100">
          <div className="flex justify-between items-center mb-6">
            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
              <CalendarIcon size={24} className="text-indigo-600"/> 
              Historial
            </h2>
            <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
-             <button onClick={prevMonth} className="p-1 hover:bg-white hover:shadow rounded-md transition-all text-gray-600">
+             <button onClick={prevMonth} className="p-1 hover:bg-white dark:bg-gray-900 hover:shadow rounded-md transition-all text-gray-600">
                <ChevronLeft size={20} />
              </button>
-             <span className="w-32 text-center font-medium text-gray-700">
+             <span className="w-32 text-center font-medium text-gray-700 dark:text-gray-200">
                {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
              </span>
-             <button onClick={nextMonth} className="p-1 hover:bg-white hover:shadow rounded-md transition-all text-gray-600">
+             <button onClick={nextMonth} className="p-1 hover:bg-white dark:bg-gray-900 hover:shadow rounded-md transition-all text-gray-600">
                <ChevronRight size={20} />
              </button>
            </div>
@@ -128,7 +128,7 @@ export const CalendarHistory: React.FC<Props> = ({ logs }) => {
        </div>
 
        {/* Daily Details */}
-       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+       <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100">
          <h3 className="text-lg font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">
            Resumen: {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
          </h3>
@@ -142,12 +142,12 @@ export const CalendarHistory: React.FC<Props> = ({ logs }) => {
              {selectedDayLogs.map(log => (
                <div key={log.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
                  <div className="flex items-center gap-3">
-                   <div className="bg-white p-2 rounded-full shadow-sm">
+                   <div className="bg-white dark:bg-gray-900 p-2 rounded-full shadow-sm">
                       {getIconForType(log.type)}
                    </div>
                    <div>
                      <p className="font-semibold text-gray-800">{log.name}</p>
-                     <p className="text-xs text-gray-500 flex items-center gap-1">
+                     <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                        <Clock size={12} />
                        {new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                      </p>

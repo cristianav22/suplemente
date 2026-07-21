@@ -19,6 +19,7 @@ const App: React.FC = () => {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [isRecovery, setIsRecovery] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'calendar' | 'profile'>('dashboard');
+  const [darkMode, setDarkMode] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: 'Atleta',
@@ -31,6 +32,20 @@ const App: React.FC = () => {
   });
 
   const [logs, setLogs] = useState<SupplementLog[]>([]);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  // --- Modo oscuro ---
+  useEffect(() => {
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+  },  [darkMode]);
+  
 
   // --- Auth listener ---
   useEffect(() => {
@@ -66,6 +81,7 @@ const App: React.FC = () => {
     // Cargar perfil
     setLoadingProfile(true);
 
+  
 supabase
   .from('profiles')
   .select('*')
@@ -189,9 +205,11 @@ supabase
   // --- Renders ---
   if (loadingAuth) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-lg">Cargando...</div>
-      </div>
+      <div className={darkMode ? 'dark' : ''}>
+        <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+          <div className="text-white text-lg">Cargando...</div>
+          </div>
+        </div>
     );
   }
   if (loadingProfile) {
@@ -211,9 +229,9 @@ supabase
   }
 // logo de la app en dashboard
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row max-w-7xl mx-auto">
-      <nav className="md:w-64 bg-white md:min-h-screen border-r border-gray-200 flex flex-row md:flex-col sticky top-0 md:relative z-10 shadow-sm md:shadow-none order-2 md:order-1">
-        <div className="hidden md:flex items-center gap-2 p-6 text-indigo-600">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white flex flex-col md:flex-row max-w-7xl mx-auto transition-colors duration-300">
+      <nav className="md:w-64 bg-white dark:bg-gray-900 md:min-h-screen border-r border-gray-200 dark:border-gray-800 flex flex-row md:flex-col sticky top-0 md:relative z-10 shadow-sm md:shadow-none order-2 md:order-1">
+          <div className="hidden md:flex items-center gap-2 p-6 text-indigo-500 dark:text-indigo-400">
           <img src="/icons/icon-512.png" alt="logo" className="w-12 h-12 rounded-lg shadow-sm" />
           <span className="text-2xl font-bold tracking-tight">SupleSuite</span>
         </div>
@@ -230,8 +248,8 @@ supabase
               onClick={() => setActiveTab(tab as any)}
               className={`flex items-center gap-3 p-3 rounded-xl transition-all w-full ${
                 activeTab === tab
-                  ? 'bg-indigo-50 text-indigo-600 font-semibold'
-                  : 'text-gray-500 hover:bg-gray-100'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 font-semibold'
+                  : 'text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
               {icon}
@@ -250,13 +268,13 @@ supabase
         </div>
       </nav>
 
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto order-1 md:order-2">
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto order-1 md:order-2 transition-colors duration-300">
         <div className="md:hidden flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2 text-indigo-600">
+          <div className="flex items-center gap-2 text-indigo-500 dark:text-indigo-400">
             <img src="/icons/icon-512.png" alt="logo" className="w-7 h-7 rounded-lg shadow-sm" />
             <span className="text-xl font-bold">SupleSuite</span>
           </div>
-          <button onClick={handleLogout} className="text-gray-400 hover:text-red-500">
+          <button onClick={handleLogout} className="text-gray-400 dark:text-gray-500 hover:text-red-500">
             <LogOut size={22} />
           </button>
         </div>
@@ -272,7 +290,12 @@ supabase
           <CalendarHistory logs={logs} />
         )}
         {activeTab === 'profile' && (
-          <ProfileSettings profile={userProfile} onSave={handleSaveProfile} />
+          <ProfileSettings 
+            profile={userProfile}
+            onSave={handleSaveProfile}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode} 
+          />
         )}
       </main>
     </div>

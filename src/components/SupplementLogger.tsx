@@ -52,7 +52,7 @@ export const SupplementLogger: React.FC<Props> = ({ onAddLog, userProfile }) => 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Selection Area */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+      <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100">
         <h2 className="text-xl font-bold mb-4 text-gray-800">Registrar Ingesta</h2>
         <div className="grid grid-cols-2 gap-3 mb-6">
           {allSupplements.map((supp) => {
@@ -68,8 +68,8 @@ export const SupplementLogger: React.FC<Props> = ({ onAddLog, userProfile }) => 
                   selectedSupp?.id === supp.id
                     ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500'
                     : isPreferred 
-                       ? 'bg-gray-50 border-indigo-100' // Subtle highlight for preferred
-                       : 'bg-gray-50 border-transparent hover:bg-gray-100'
+                       ? 'bg-gray-50 dark:bg-gray-950 border-indigo-100' // Subtle highlight for preferred
+                       : 'bg-gray-50 dark:bg-gray-900 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
                 {isPreferred && <div className="absolute top-1 right-1 w-2 h-2 bg-indigo-400 rounded-full"></div>}
@@ -84,18 +84,18 @@ export const SupplementLogger: React.FC<Props> = ({ onAddLog, userProfile }) => 
         </div>
 
         {selectedSupp && (
-          <div className="animate-fade-in space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="animate-fade-in space-y-4 dark:bg-gray-900 p-4 rounded-lg border border-gray-200">
              <div className="flex justify-between items-center">
                 <label className="font-medium text-gray-700">Cantidad ({selectedSupp.defaultUnit})</label>
                 <div className="flex items-center gap-3">
                    <button 
                      onClick={() => setAmount(prev => Math.max(0, prev - (selectedSupp.defaultAmount / 2)))}
-                     className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50"
+                     className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50 dark:bg-gray-900"
                    >-</button>
                    <span className="w-16 text-center font-bold text-lg">{amount}</span>
                    <button 
                      onClick={() => setAmount(prev => prev + (selectedSupp.defaultAmount / 2))}
-                     className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50"
+                     className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50 dark:bg-gray-900"
                    >+</button>
                 </div>
              </div>

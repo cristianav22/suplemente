@@ -1,19 +1,32 @@
 
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserProfile, Goal, ActivityLevel, AVAILABLE_SUPPLEMENTS, SupplementInfo } from '../types';
-import { Save, User, AlertTriangle, Info, CheckCircle, X, Search, Sparkles, Plus } from 'lucide-react';
+import { Save, User, AlertTriangle, Info, CheckCircle, X, Search, Sparkles, Plus, Moon, Sun } from 'lucide-react';
 import { getSupplementSafetyInfo, analyzeCustomSupplement } from '../services/geminiService';
+
+
 
 interface Props {
   profile: UserProfile;
   onSave: (profile: UserProfile) => void;
+  darkMode: boolean;
+  setDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const ProfileSettings: React.FC<Props> = ({ profile, onSave }) => {
+export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
+  setDarkMode }) => {
   const [formData, setFormData] = useState<UserProfile>(profile);
   const [safetyInfo, setSafetyInfo] = useState<{name: string, info: string} | null>(null);
   const [loadingInfo, setLoadingInfo] = useState(false);
-  
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+    
   // Custom Supplement State
   const [customSearch, setCustomSearch] = useState("");
   const [analyzingCustom, setAnalyzingCustom] = useState(false);
@@ -78,8 +91,10 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave }) => {
     ...(formData.customSupplements || [])
   ];
 
+  
+
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative">
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100 relative">
       <div className="flex items-center gap-2 mb-6 text-indigo-600">
         <User size={24} />
         <h2 className="text-xl font-bold">Configuración de Perfil</h2>
@@ -88,7 +103,7 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave }) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Info Section */}
         <div className="space-y-4 border-b border-gray-100 pb-6">
-          <h3 className="font-semibold text-gray-800">Datos Personales</h3>
+          <h3 className="font-semibold text-gray-800 dark:text-white">Datos Personales</h3>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
             <input
@@ -161,9 +176,9 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave }) => {
         {/* Supplement Stack Selection */}
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+            <h3 className="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
               Mi Stack de Suplementos
-              <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Selecciona los que usas</span>
+              <span className="text-xs font-normal text-gray-500 dark:text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Selecciona los que usas</span>
             </h3>
           </div>
 
@@ -202,7 +217,7 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave }) => {
               const isMedium = supp.riskLevel === 'medium';
               const isCustom = supp.id.startsWith('custom-');
               
-              let borderClass = "border-gray-200";
+              let borderClass = "border-gray-200 dark:border-gray-700";
               if (isActive) borderClass = "border-indigo-500 bg-indigo-50";
               if (isActive && isRisky) borderClass = "border-red-500 bg-red-50";
               if (isActive && isMedium) borderClass = "border-orange-400 bg-orange-50";
@@ -215,11 +230,11 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave }) => {
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
-                      <div className={`w-5 h-5 rounded border flex items-center justify-center ${isActive ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-gray-300'}`}>
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center ${isActive ? 'bg-indigo-600 border-indigo-600' : 'bg-white dark:bg-gray-900 border-gray-300'}`}>
                         {isActive && <CheckCircle size={14} className="text-white" />}
                       </div>
                       <div className="flex flex-col">
-                        <span className={`font-medium leading-tight ${isRisky ? 'text-red-700' : 'text-gray-800'}`}>
+                        <span className={`font-medium leading-tight ${isRisky ? 'text-red-700' : 'text-gray-800 dark:text-white'}`}>
                           {supp.name}
                         </span>
                         {isCustom && <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 rounded-full w-fit mt-0.5">Personalizado</span>}
@@ -248,7 +263,7 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave }) => {
                     </div>
                   </div>
 
-                  <p className="text-xs text-gray-500 mt-1 ml-7">{supp.description}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-7">{supp.description}</p>
                   
                   {isRisky && (
                     <div className="mt-2 ml-7 flex items-start gap-1.5 text-xs text-red-600 font-semibold bg-red-100 p-2 rounded">
@@ -267,12 +282,51 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave }) => {
             })}
           </div>
         </div>
+        {/* Toggle Dark Mode */}
+<div className="mt-6 p-4 rounded-2xl border border-gray-200 dark:border-gray-700">
+  <div className="flex items-center justify-between">
+
+    <div className="flex items-center gap-3">
+
+      {darkMode ? (
+        <Moon className="text-indigo-400" size={22} />
+      ) : (
+        <Sun className="text-yellow-500" size={22} />
+      )}
+
+      <div>
+        <p className="font-medium text-gray-800 dark:text-white">
+          Tema
+        </p>
+
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Cambiar entre modo claro y oscuro
+        </p>
+      </div>
+
+    </div>
+
+    <button
+      type="button"
+      onClick={() => setDarkMode(!darkMode)}
+      className={`w-14 h-8 flex items-center rounded-full p-1 transition-all ${
+        darkMode
+          ? 'bg-indigo-600 justify-end'
+          : 'bg-gray-300 justify-start'
+      }`}
+    >
+      <div className="w-6 h-6 bg-white dark:bg-gray-900 rounded-full shadow-md" />
+    </button>
+
+  </div>
+</div>
 
         <button
           type="submit"
           className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
         >
           <Save size={18} />
+          
           Guardar Perfil
         </button>
       </form>
@@ -280,9 +334,9 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave }) => {
       {/* Safety Info Modal */}
       {safetyInfo && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/10 backdrop-blur-[1px] rounded-xl p-4">
-          <div className="bg-white p-5 rounded-lg shadow-xl border border-gray-200 max-w-sm w-full animate-fade-in">
+          <div className="bg-white dark:bg-gray-900 p-5 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-w-sm w-full animate-fade-in">
             <div className="flex justify-between items-center mb-3">
-              <h4 className="font-bold text-gray-800 flex items-center gap-2">
+              <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
                 <Info size={18} className="text-indigo-600" />
                 Seguridad: {safetyInfo.name}
               </h4>
@@ -306,7 +360,7 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave }) => {
             
             <button 
               onClick={() => setSafetyInfo(null)}
-              className="mt-4 w-full bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold py-2 rounded"
+              className="mt-4 w-full bg-gray-100 hover:bg-gray-200 text-gray-800 dark:text-white text-sm font-semibold py-2 rounded"
             >
               Entendido
             </button>
