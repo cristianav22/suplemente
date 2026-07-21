@@ -1,15 +1,17 @@
 import { supabase } from "./supabaseClient"
 
 export const getCurrentUser = async () => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return null;
   const { data, error } = await supabase.auth.getUser()
-  if (error) throw error
+  if (error) return null;
   return data.user
 }
 
 export const getProfile = async () => {
   const user = await getCurrentUser()
 
-  if (!user) throw new Error("Usuario no autenticado")
+  if (!user) return null;
 
   const { data, error } = await supabase
     .from("profiles")

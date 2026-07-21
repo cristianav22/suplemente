@@ -1,35 +1,23 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { UserProfile, Goal, ActivityLevel, AVAILABLE_SUPPLEMENTS, SupplementInfo } from '../types';
-import { Save, User, AlertTriangle, Info, CheckCircle, X, Search, Sparkles, Plus, Moon, Sun } from 'lucide-react';
+import { Save, User, AlertTriangle, Info, CheckCircle, X, Search, Sparkles, Plus, Eye, EyeOff } from 'lucide-react';
 import { getSupplementSafetyInfo, analyzeCustomSupplement } from '../services/geminiService';
-
-
 
 interface Props {
   profile: UserProfile;
   onSave: (profile: UserProfile) => void;
-  darkMode: boolean;
-  setDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
-  setDarkMode }) => {
+export const ProfileSettings: React.FC<Props> = ({ profile, onSave }) => {
   const [formData, setFormData] = useState<UserProfile>(profile);
   const [safetyInfo, setSafetyInfo] = useState<{name: string, info: string} | null>(null);
   const [loadingInfo, setLoadingInfo] = useState(false);
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-    
+  
   // Custom Supplement State
   const [customSearch, setCustomSearch] = useState("");
   const [analyzingCustom, setAnalyzingCustom] = useState(false);
+  const [showImcStatus, setShowImcStatus] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,33 +79,31 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
     ...(formData.customSupplements || [])
   ];
 
-  
-
   return (
-    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100 relative">
-      <div className="flex items-center gap-2 mb-6 text-indigo-600">
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 relative">
+      <div className="flex items-center gap-2 mb-6 text-indigo-600 dark:text-indigo-400">
         <User size={24} />
-        <h2 className="text-xl font-bold">Configuración de Perfil</h2>
+        <h2 className="text-xl font-bold dark:text-gray-100">Configuración de Perfil</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Info Section */}
-        <div className="space-y-4 border-b border-gray-100 pb-6">
-          <h3 className="font-semibold text-gray-800 dark:text-white">Datos Personales</h3>
+        <div className="space-y-4 border-b border-gray-100 dark:border-gray-800 pb-6">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-200">Datos Personales</h3>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
              <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Peso (kg)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Peso (kg)</label>
               <input
                 type="number"
                 required
@@ -125,31 +111,111 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
                 max="300"
                 value={formData.weight}
                 onChange={(e) => setFormData({ ...formData, weight: parseFloat(e.target.value) })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Objetivo</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">Altura (cm) <Sparkles size={12} className="text-amber-500"/></label>
+              <input
+                type="number"
+                min="100"
+                max="250"
+                value={formData.height || ''}
+                onChange={(e) => setFormData({ ...formData, height: e.target.value ? parseFloat(e.target.value) : undefined })}
+                className="w-full px-4 py-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-amber-500 outline-none transition-all"
+                placeholder="Ej. 175"
+              />
+            </div>
+          </div>
+          
+          {formData.height && formData.weight && (() => {
+             const imc = formData.weight / Math.pow(formData.height / 100, 2);
+             let status = "";
+             let colorClass = "";
+             if (imc < 18.5) { status = "Bajo peso"; colorClass = "text-blue-600 dark:text-blue-400"; }
+             else if (imc < 25) { status = "Peso normal"; colorClass = "text-green-600 dark:text-green-400"; }
+             else if (imc < 30) { status = "Sobrepeso"; colorClass = "text-yellow-600 dark:text-yellow-400"; }
+             else { status = "Obesidad"; colorClass = "text-red-600 dark:text-red-400"; }
+
+             return (
+             <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 p-4 rounded-xl border border-amber-200 dark:border-amber-800/50 flex items-start gap-3 animate-fade-in shadow-sm w-full">
+                <Sparkles className="text-amber-500 shrink-0 mt-0.5" size={24} />
+                <div className="flex-1 w-full">
+                   <h4 className="font-bold text-amber-900 dark:text-amber-400 text-sm flex items-center gap-2">
+                     Tu IMC (Premium)
+                     <span className="text-[9px] uppercase bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 px-1.5 py-0.5 rounded-full font-bold">PRO</span>
+                   </h4>
+                   <p className="text-2xl font-black text-amber-600 dark:text-amber-500 mt-0.5 mb-2">
+                      {imc.toFixed(1)}
+                   </p>
+                   
+                   <div className="mb-3 relative rounded-lg overflow-hidden border border-amber-200/50 dark:border-amber-700/50 bg-white/70 dark:bg-black/30">
+                      {!showImcStatus ? (
+                         <div className="absolute inset-0 z-10 backdrop-blur-sm bg-white/40 dark:bg-black/40 flex flex-col items-center justify-center p-3 text-center">
+                            <p className="text-xs text-gray-700 dark:text-gray-300 font-medium mb-2 leading-tight max-w-[250px]">
+                               Este texto no te define, pero si deseas verlo puede ayudarte a saber tu estado según el IMC y así lograr tu objetivo.
+                            </p>
+                            <button
+                               type="button"
+                               onClick={() => setShowImcStatus(true)}
+                               className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-1.5 px-4 rounded-full shadow-sm transition-colors flex items-center gap-1"
+                            >
+                               <Eye size={14} /> Aceptar y ver
+                            </button>
+                         </div>
+                      ) : null}
+                      
+                      <div className={`p-3 ${!showImcStatus ? 'opacity-20 select-none' : ''}`}>
+                         <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                            Estado actual: <span className={`font-bold ${colorClass}`}>{status}</span>
+                         </p>
+                         <p className="text-xs text-gray-600 dark:text-gray-400">
+                            Basado en los rangos estándar de la OMS para adultos. Un índice entre 18.5 y 24.9 se considera dentro del rango normal.
+                         </p>
+                         {showImcStatus && (
+                            <button
+                               type="button"
+                               onClick={() => setShowImcStatus(false)}
+                               className="text-[10px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1 mt-2 uppercase tracking-wide font-semibold"
+                            >
+                               <EyeOff size={12} /> Ocultar
+                            </button>
+                         )}
+                      </div>
+                   </div>
+
+                   <div className="bg-white/50 dark:bg-black/20 p-2 rounded text-xs text-amber-800/80 dark:text-amber-400/80 leading-snug border border-amber-200/50 dark:border-amber-800/50">
+                     <strong>Aviso Legal:</strong> El Índice de Masa Corporal (IMC) es una medida orientativa. Te recomendamos consultar siempre con un profesional médico o nutricionista para una evaluación de salud completa.
+                   </div>
+                </div>
+             </div>
+             );
+          })()}
+
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Objetivo</label>
               <select
                 value={formData.goal}
                 onChange={(e) => setFormData({ ...formData, goal: e.target.value as Goal })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none"
               >
-                <option value="muscle">Ganar Músculo</option>
-                <option value="weight_loss">Perder Peso</option>
-                <option value="maintenance">Mantenimiento</option>
+                <option value="weight_loss">Bajar de peso</option>
+                <option value="muscle">Subir</option>
+                <option value="maintenance">Mantener</option>
+                <option value="wellbeing">Me siento bien</option>
               </select>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* The rest of the old grid logic was lost, let's just make it correctly inline */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nivel de Actividad</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nivel de Actividad</label>
               <select
                 value={formData.activityLevel}
                 onChange={(e) => setFormData({ ...formData, activityLevel: e.target.value as ActivityLevel })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none"
               >
                 <option value="sedentary">Sedentario (Poco ejercicio)</option>
                 <option value="moderate">Moderado (1-3 días/sem)</option>
@@ -157,9 +223,11 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
                 <option value="athlete">Atleta (6-7 días/sem)</option>
               </select>
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Meta de Sueño (horas)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meta de Sueño (horas)</label>
               <input
                 type="number"
                 min="4"
@@ -167,24 +235,25 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
                 step="0.5"
                 value={formData.sleepGoal || 8}
                 onChange={(e) => setFormData({ ...formData, sleepGoal: parseFloat(e.target.value) })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
           </div>
+
         </div>
 
         {/* Supplement Stack Selection */}
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               Mi Stack de Suplementos
-              <span className="text-xs font-normal text-gray-500 dark:text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Selecciona los que usas</span>
+              <span className="text-xs font-normal text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">Selecciona los que usas</span>
             </h3>
           </div>
 
           {/* Add Custom Supplement Input */}
-          <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-             <label className="block text-sm font-medium text-indigo-900 mb-2">
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
+             <label className="block text-sm font-medium text-indigo-900 dark:text-indigo-300 mb-2">
                ¿No encuentras tu suplemento?
              </label>
              <div className="flex gap-2">
@@ -193,18 +262,18 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
                  placeholder="Ej: Ashwagandha, Citrulina..." 
                  value={customSearch}
                  onChange={(e) => setCustomSearch(e.target.value)}
-                 className="flex-1 px-4 py-2 rounded-lg border border-indigo-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                 className="flex-1 px-4 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                />
                <button 
                  onClick={handleAddCustomSupplement}
                  disabled={analyzingCustom || !customSearch}
-                 className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
+                 className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-800 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
                >
                  {analyzingCustom ? <Sparkles size={16} className="animate-spin" /> : <Search size={16} />}
                  {analyzingCustom ? "Investigando..." : "Investigar y Agregar"}
                </button>
              </div>
-             <p className="text-xs text-indigo-600/70 mt-2">
+             <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 mt-2">
                <Sparkles size={12} className="inline mr-1" />
                La IA analizará el prospecto, dosis y riesgos automáticamente.
              </p>
@@ -218,9 +287,9 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
               const isCustom = supp.id.startsWith('custom-');
               
               let borderClass = "border-gray-200 dark:border-gray-700";
-              if (isActive) borderClass = "border-indigo-500 bg-indigo-50";
-              if (isActive && isRisky) borderClass = "border-red-500 bg-red-50";
-              if (isActive && isMedium) borderClass = "border-orange-400 bg-orange-50";
+              if (isActive) borderClass = "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-500";
+              if (isActive && isRisky) borderClass = "border-red-500 bg-red-50 dark:bg-red-900/30 dark:border-red-500";
+              if (isActive && isMedium) borderClass = "border-orange-400 bg-orange-50 dark:bg-orange-900/30 dark:border-orange-500";
 
               return (
                 <div 
@@ -230,14 +299,14 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
-                      <div className={`w-5 h-5 rounded border flex items-center justify-center ${isActive ? 'bg-indigo-600 border-indigo-600' : 'bg-white dark:bg-gray-900 border-gray-300'}`}>
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center ${isActive ? 'bg-indigo-600 border-indigo-600 dark:bg-indigo-500 dark:border-indigo-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'}`}>
                         {isActive && <CheckCircle size={14} className="text-white" />}
                       </div>
                       <div className="flex flex-col">
-                        <span className={`font-medium leading-tight ${isRisky ? 'text-red-700' : 'text-gray-800 dark:text-white'}`}>
+                        <span className={`font-medium leading-tight ${isRisky ? 'text-red-700 dark:text-red-400' : 'text-gray-800 dark:text-gray-200'}`}>
                           {supp.name}
                         </span>
-                        {isCustom && <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 rounded-full w-fit mt-0.5">Personalizado</span>}
+                        {isCustom && <span className="text-[10px] bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-1.5 rounded-full w-fit mt-0.5">Personalizado</span>}
                       </div>
                     </div>
                     
@@ -245,7 +314,7 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
                         {(isRisky || isMedium) && (
                           <button
                             onClick={(e) => handleGetSafetyInfo(e, supp.name)}
-                            className="text-gray-400 hover:text-indigo-600 p-1"
+                            className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-1"
                             title="Consultar seguridad"
                           >
                             <Info size={18} />
@@ -254,7 +323,7 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
                         {isCustom && (
                           <button
                              onClick={(e) => removeCustomSupplement(e, supp.id)}
-                             className="text-gray-400 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                             className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                              title="Eliminar suplemento personalizado"
                           >
                             <X size={18} />
@@ -266,13 +335,13 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-7">{supp.description}</p>
                   
                   {isRisky && (
-                    <div className="mt-2 ml-7 flex items-start gap-1.5 text-xs text-red-600 font-semibold bg-red-100 p-2 rounded">
+                    <div className="mt-2 ml-7 flex items-start gap-1.5 text-xs text-red-600 dark:text-red-400 font-semibold bg-red-100 dark:bg-red-900/30 p-2 rounded">
                       <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                       <span>Atención: Ingesta debe ser administrada por un profesional.</span>
                     </div>
                   )}
                    {isMedium && (
-                    <div className="mt-2 ml-7 flex items-start gap-1.5 text-xs text-orange-700 font-semibold bg-orange-100 p-2 rounded">
+                    <div className="mt-2 ml-7 flex items-start gap-1.5 text-xs text-orange-700 dark:text-orange-400 font-semibold bg-orange-100 dark:bg-orange-900/30 p-2 rounded">
                       <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                       <span>Consumir con moderación y cuidado.</span>
                     </div>
@@ -282,73 +351,34 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
             })}
           </div>
         </div>
-        {/* Toggle Dark Mode */}
-<div className="mt-6 p-4 rounded-2xl border border-gray-200 dark:border-gray-700">
-  <div className="flex items-center justify-between">
-
-    <div className="flex items-center gap-3">
-
-      {darkMode ? (
-        <Moon className="text-indigo-400" size={22} />
-      ) : (
-        <Sun className="text-yellow-500" size={22} />
-      )}
-
-      <div>
-        <p className="font-medium text-gray-800 dark:text-white">
-          Tema
-        </p>
-
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Cambiar entre modo claro y oscuro
-        </p>
-      </div>
-
-    </div>
-
-    <button
-      type="button"
-      onClick={() => setDarkMode(!darkMode)}
-      className={`w-14 h-8 flex items-center rounded-full p-1 transition-all ${
-        darkMode
-          ? 'bg-indigo-600 justify-end'
-          : 'bg-gray-300 justify-start'
-      }`}
-    >
-      <div className="w-6 h-6 bg-white dark:bg-gray-900 rounded-full shadow-md" />
-    </button>
-
-  </div>
-</div>
 
         <button
           type="submit"
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
         >
           <Save size={18} />
-          
           Guardar Perfil
         </button>
       </form>
 
       {/* Safety Info Modal */}
       {safetyInfo && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/10 backdrop-blur-[1px] rounded-xl p-4">
-          <div className="bg-white dark:bg-gray-900 p-5 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-w-sm w-full animate-fade-in">
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/10 dark:bg-black/40 backdrop-blur-[1px] rounded-xl p-4">
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-w-sm w-full animate-fade-in">
             <div className="flex justify-between items-center mb-3">
-              <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                <Info size={18} className="text-indigo-600" />
+              <h4 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                <Info size={18} className="text-indigo-600 dark:text-indigo-400" />
                 Seguridad: {safetyInfo.name}
               </h4>
               <button 
                 onClick={() => setSafetyInfo(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
               >
                 <X size={20} />
               </button>
             </div>
             
-            <div className="text-sm text-gray-600 leading-relaxed max-h-60 overflow-y-auto">
+            <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed max-h-60 overflow-y-auto">
                {loadingInfo ? (
                  <div className="flex gap-2 items-center text-gray-400">
                     <span className="animate-spin">⏳</span> Consultando IA...
@@ -360,7 +390,7 @@ export const ProfileSettings: React.FC<Props> = ({ profile, onSave, darkMode,
             
             <button 
               onClick={() => setSafetyInfo(null)}
-              className="mt-4 w-full bg-gray-100 hover:bg-gray-200 text-gray-800 dark:text-white text-sm font-semibold py-2 rounded"
+              className="mt-4 w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 text-sm font-semibold py-2 rounded transition-colors"
             >
               Entendido
             </button>

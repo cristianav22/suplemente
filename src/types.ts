@@ -1,10 +1,11 @@
 
-export type Goal = 'muscle' | 'weight_loss' | 'maintenance';
+export type Goal = 'muscle' | 'weight_loss' | 'maintenance' | 'wellbeing';
 export type ActivityLevel = 'sedentary' | 'moderate' | 'active' | 'athlete';
 
 export interface UserProfile {
   name: string;
   weight: number; // kg
+  height?: number; // cm
   goal: Goal;
   activityLevel: ActivityLevel;
   activeSupplements: string[]; // IDs of selected supplements
